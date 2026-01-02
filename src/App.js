@@ -20,10 +20,23 @@ function App() {
   const fetchContacts = async () => {
     try {
       const response = await fetch(`${API_URL}/contacts`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
-      setContacts(data);
+      
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setContacts(data);
+      } else {
+        console.error('Invalid response format:', data);
+        setContacts([]);
+      }
     } catch (error) {
       console.error('Error fetching contacts:', error);
+      setContacts([]); // Set to empty array on error
     }
   };
 
@@ -39,7 +52,8 @@ function App() {
 
       if (response.ok) {
         const newContact = await response.json();
-        setContacts([newContact, ...contacts]);
+        // Ensure contacts is an array before spreading
+        setContacts([newContact, ...(Array.isArray(contacts) ? contacts : [])]);
         setSuccessMessage('Contact added successfully!');
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
@@ -61,7 +75,8 @@ function App() {
         });
 
         if (response.ok) {
-          setContacts(contacts.filter(contact => contact._id !== id));
+          // Ensure contacts is an array before filtering
+          setContacts(Array.isArray(contacts) ? contacts.filter(contact => contact._id !== id) : []);
           setSuccessMessage('Contact deleted successfully!');
           setShowSuccess(true);
           setTimeout(() => setShowSuccess(false), 3000);
@@ -81,7 +96,8 @@ function App() {
   };
 
   // Sort contacts based on selected option
-  const sortedContacts = [...contacts].sort((a, b) => {
+  // Ensure contacts is always an array before sorting
+  const sortedContacts = Array.isArray(contacts) ? [...contacts].sort((a, b) => {
     switch (sortBy) {
       case 'newest':
         return new Date(b.createdAt) - new Date(a.createdAt);
@@ -94,7 +110,7 @@ function App() {
       default:
         return 0;
     }
-  });
+  }) : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
